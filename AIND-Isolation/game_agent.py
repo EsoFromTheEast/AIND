@@ -34,8 +34,7 @@ def custom_score(game, player):
     float
         The heuristic value of the current game state to the specified player.
     """
-    # TODO: finish this function!
-    raise NotImplementedError
+    return float((2 * len(game.get_legal_moves(game.active_player))) - len(game.get_legal_moves(game.inactive_player)))
 
 
 def custom_score_2(game, player):
@@ -60,8 +59,7 @@ def custom_score_2(game, player):
     float
         The heuristic value of the current game state to the specified player.
     """
-    # TODO: finish this function!
-    raise NotImplementedError
+    return float(len(game.get_legal_moves(game.active_player)) - len(game.get_legal_moves(game.inactive_player)))
 
 
 def custom_score_3(game, player):
@@ -86,9 +84,13 @@ def custom_score_3(game, player):
     float
         The heuristic value of the current game state to the specified player.
     """
-    # TODO: finish this function!
-    raise NotImplementedError
+    return float(len(game.get_legal_moves(game.active_player)) - (2 * len(game.get_legal_moves(game.inactive_player))))
 
+def custom_score_4(game, player):
+    return float(len(game.get_legal_moves(game.active_player)))
+
+def custom_score_5(game, player):
+    return float(-len(game.get_legal_moves(game.inactive_player)))
 
 class IsolationPlayer:
     """Base class for minimax and alphabeta agents -- this class is never
@@ -165,7 +167,7 @@ class MinimaxPlayer(IsolationPlayer):
             return self.minimax(game, self.search_depth)
 
         except SearchTimeout:
-            pass  # Handle any actions required after timeout as needed
+            return self.best_move
 
         # Return the best move from the last completed search iteration
         return best_move
@@ -209,11 +211,97 @@ class MinimaxPlayer(IsolationPlayer):
                 each helper function or else your agent will timeout during
                 testing.
         """
-        if self.time_left() < self.TIMER_THRESHOLD:
-            raise SearchTimeout()
+        # Get all Legal Moves
+        legal_moves = game.get_legal_moves()
 
-        # TODO: finish this function!
-        raise NotImplementedError
+        # Initialize score and move
+        score_max = float("-inf")
+        move = legal_moves[0] if legal_moves else (-1, -1)
+
+        # For each move
+        for m in legal_moves :
+            try :
+                # Get the score
+                score = minmax(game.forecast_move(m), self,depth-1,self.score,self.time_left,self.TIMER_THRESHOLD,False)
+
+                # Update max score and move
+                if score > score_max :
+                    move = m
+                    score_max = score
+
+            except SearchTimeout:
+                # If we are out of time, raise exception and save the best move so far
+                self.best_move = move
+                raise SearchTimeout()
+
+        return move
+
+def minmax(game,player,depth,score_fn,time_left,TIMER_THRESHOLD,maximum):
+    """
+    Min-Max Search algorithm
+    Parameters
+    ----------
+    game : isolation.Board
+        An instance of the Isolation game `Board` class representing the
+        current game state
+    player : IsolationPlayer
+        An instance of the main player
+    depth : int
+        Depth is an integer representing number of plies left to
+        search in the game tree before aborting
+    score_fn : callable
+        the heuristic fuction used to evaluate the score
+    time_left : callable
+        A function that returns the number of milliseconds left in the
+        current turn. Returning with any less than 0 ms remaining forfeits
+        the game.
+    maximum : boolean
+        true if current level is maximum
+    TIMER_THRESHOLD : float
+        time threshold to return the score before time out
+
+    Returns
+    -------
+    float
+        the score of current node
+    """
+    # If we reached the Max Depth, evaluate the score and return it
+    if depth == 0 :
+        return score_fn(game,player)
+
+    # Get all possible moves
+    moves = game.get_legal_moves()
+
+    # If Maximum
+    if maximum :
+        score_max = float("-inf")
+        # For each move
+        for m in moves :
+            # Return best score so far if we are out of time
+            if time_left() < TIMER_THRESHOLD + 3:
+                raise SearchTimeout()
+
+            # Evaluate the score of that move
+            score = minmax(game.forecast_move(m),player,depth-1,score_fn,time_left,TIMER_THRESHOLD,False)
+
+            # Update the maximum score if needed
+            score_max = max(score_max,score)
+        return score_max
+    else :
+        score_max = float("inf")
+        # For each move
+        for m in moves :
+            # Return best score so far if we are out of time
+            if time_left() < TIMER_THRESHOLD + 3:
+                raise SearchTimeout()
+
+            # Evaluate the score of that move
+            score = minmax(game.forecast_move(m),player,depth-1,score_fn,time_left,TIMER_THRESHOLD,True)
+
+            # Update the maximum score if needed
+            score_max = min(score_max,score)
+
+        return score_max
 
 
 class AlphaBetaPlayer(IsolationPlayer):
@@ -254,8 +342,32 @@ class AlphaBetaPlayer(IsolationPlayer):
         """
         self.time_left = time_left
 
-        # TODO: finish this function!
-        raise NotImplementedError
+        # Initialize the best move so that this function returns something
+        # in case the search fails due to timeout
+        best_move = (-1,-1)
+        depth = 1
+        # The try/except block will automatically catch the exception
+        # raised when the timer is about to expire.
+        try :
+            # For each depth evaulate the score
+            while 1 :
+                # Check Timer
+                if self.time_left() < self.TIMER_THRESHOLD :
+                    return best_move
+
+                # Evaluate
+                move = self.alphabeta(game, depth)
+
+                # Update the best move if a valid move recieved
+                if move != (-1,-1):
+                    best_move = move
+
+                depth = depth + 1
+
+        except SearchTimeout:
+            return best_move
+
+        return best_move
 
     def alphabeta(self, game, depth, alpha=float("-inf"), beta=float("inf")):
         """Implement depth-limited minimax search with alpha-beta pruning as
@@ -302,8 +414,107 @@ class AlphaBetaPlayer(IsolationPlayer):
                 each helper function or else your agent will timeout during
                 testing.
         """
-        if self.time_left() < self.TIMER_THRESHOLD:
-            raise SearchTimeout()
+        # Get all Legal Moves
+        legal_moves = game.get_legal_moves()
 
-        # TODO: finish this function!
-        raise NotImplementedError
+        # If no legal move left, return the default
+        if not legal_moves:
+            return (-1,-1)
+
+        # Initialize move
+        move = legal_moves[0]
+
+        for m in legal_moves :
+            if self.time_left() < self.TIMER_THRESHOLD :
+                raise SearchTimeout()
+
+            # For each move get the score
+            curr_score = alphabeta(game.forecast_move(m), self,depth-1,self.score,self.time_left,self.TIMER_THRESHOLD,False,alpha,beta)
+
+            # Update max score and best move
+            if curr_score > alpha :
+                move = m
+                alpha = curr_score
+
+        return move
+
+def alphabeta(game,player,depth,score_fn,time_left,TIMER_THRESHOLD,maximum,alpha,beta):
+    """
+    Min-Max Search algorithm
+    Parameters
+    ----------
+    game : isolation.Board
+        An instance of the Isolation game `Board` class representing the
+        current game state
+    player : IsolationPlayer
+        An instance of the main player
+    depth : int
+        Depth is an integer representing number of plies left to
+        search in the game tree before aborting
+    score_fn : callable
+        the heuristic fuction used to evaluate the score
+    time_left : callable
+        A function that returns the number of milliseconds left in the
+        current turn. Returning with any less than 0 ms remaining forfeits
+        the game.
+    maximum : boolean
+        true if current level is maximum
+    TIMER_THRESHOLD : float
+        time threshold to return the score before time out
+    alpha : float
+        upper bound for alpha beta pruning
+    beta : float
+        lower bound for alpha beta pruning
+    Returns
+    -------
+    float
+        the score of current node
+    """
+    # If we reached the Max Depth, evaluate the score and return it
+    if depth == 0:
+        return score_fn(game,player)
+
+    # Get all possible moves
+    moves = game.get_legal_moves()
+
+    # For each move
+    if maximum :
+        score_max = float("-inf")
+        for m in moves :
+            # timer check
+            if time_left() < TIMER_THRESHOLD + 3:
+                raise SearchTimeout()
+
+            # Evaluate the score of that move
+            score = alphabeta(game.forecast_move(m),player,depth-1,score_fn,time_left,TIMER_THRESHOLD,False,alpha,beta)
+
+            # Update the maximum score if needed
+            score_max = max(score_max,score)
+
+            # Update range
+            alpha = max(alpha, score_max)
+
+            # Check if max score out of the alpha beta range, no need to tranverse
+            if (alpha >= beta):
+                return score_max
+        return score_max
+    else :
+        score_max = float("inf")
+        for m in moves :
+            # timer check
+            if time_left() < TIMER_THRESHOLD + 3:
+                raise SearchTimeout()
+
+            # Evaluate the score of that move
+            score = alphabeta(game.forecast_move(m),player,depth-1,score_fn,time_left,TIMER_THRESHOLD,True,alpha,beta)
+
+            # Update the maximum score if needed
+            score_max = min(score_max,score)
+
+            # Update range
+            beta = min(beta, score_max)
+
+            # Check if max score out of the alpha beta range, no need to tranverse
+            if (beta <= alpha):
+                return score_max
+        return score_max

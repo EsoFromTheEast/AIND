@@ -87,18 +87,19 @@ def depthFirstSearch(problem):
     print "Start's successors:", problem.getSuccessors(problem.getStartState())
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    return searchUtil(problem,util.Stack())
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    return searchUtil(problem,util.Queue())
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
-
+    func = lambda state,action,cost : cost
+    return searchUtil(problem,util.PriorityQueue(),func)
+      
 def nullHeuristic(state, problem=None):
     """
     A heuristic function estimates the cost from the current state to the nearest
@@ -109,9 +110,37 @@ def nullHeuristic(state, problem=None):
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    func = lambda state,action,cost : cost + heuristic(state,problem)
+    return searchUtil(problem,util.PriorityQueue(),func)
 
+def searchUtil(problem,container,func=None):
+    # Track Visited Nodes
+    visited = set()
 
+    # Push Root Node
+    if func is None :
+        container.push([problem.getStartState(),[],0])
+    else :
+        container.push([problem.getStartState(),[],0],0)
+  
+    while(not container.isEmpty()) :
+        [state,actions,cost] = container.pop()
+
+        visited.add(state)
+
+        if(problem.isGoalState(state)):
+            return actions
+    
+        # Push Each Sucessor with the appropriate function
+        sucessors = problem.getSuccessors(state)
+        for [s_state,s_action,s_cost] in sucessors:
+            if(s_state not in visited) :
+                if func is None :
+                    container.push([s_state,actions+[s_action],0])
+                else :
+                    total_cost = s_cost + func(s_state,s_action,s_cost)
+                    container.push([s_state,actions+[s_action],total_cost],total_cost)
+  
 # Abbreviations
 bfs = breadthFirstSearch
 dfs = depthFirstSearch

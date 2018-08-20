@@ -95,6 +95,9 @@ def cross(A, B):
     """Cross product of elements in A and elements in B """
     return [x+y for x in A for y in B]
 
+def dot(A,B):
+    """Dot product of elements in A and elements in B """
+    return [A[i]+B[i] for i in range(0,len(A))] if(len(A) == len(B)) else None
 
 def values2grid(values):
     """Convert the dictionary board representation to as string
@@ -107,7 +110,7 @@ def values2grid(values):
     Returns
     -------
     a string representing a sudoku grid.
-        
+
         Ex. '2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3'
     """
     res = []
@@ -125,9 +128,9 @@ def grid2values(grid):
     ----------
     grid(string)
         a string representing a sudoku grid.
-        
+
         Ex. '2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3'
-    
+
     Returns
     -------
         A grid in dictionary form
@@ -161,7 +164,7 @@ def display(values):
 
 
 def reconstruct(values, history):
-    """Returns the solution as a sequence of value assignments 
+    """Returns the solution as a sequence of value assignments
 
     Parameters
     ----------
